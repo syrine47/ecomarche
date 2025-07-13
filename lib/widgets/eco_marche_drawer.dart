@@ -32,6 +32,14 @@ class EcoMarcheDrawer extends StatelessWidget {
               Navigator.pushNamed(context, '/market-form'); // 👈 nouvelle route
             },
           ),
+ ListTile(
+            leading: const Icon(Icons.store),
+            title: const Text('Marchés disponibles'),
+            onTap: () {
+              Navigator.pushNamed(context, '/market-list'); // 👈 nouvelle route
+            },
+          ),
+
           ListTile(
             leading: const Icon(Icons.shopping_basket),
             title: const Text('Produits bio'),
@@ -53,6 +61,8 @@ class EcoMarcheDrawer extends StatelessWidget {
               // Navigator.pushNamed(context, '/notifications');
             },
           ),
+
+          
           const Divider(),
           ListTile(
             leading: const Icon(Icons.settings),

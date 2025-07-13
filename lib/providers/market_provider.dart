@@ -28,7 +28,7 @@ class MarketProvider with ChangeNotifier {
     } catch (e) {
       throw Exception("Erreur lors du chargement des marchés : $e");
     }
-  } 
+  }
 
   /// ➕ Ajouter un nouveau marché avec image
   Future<void> addMarket(Market market, File imageFile) async {
@@ -97,5 +97,14 @@ class MarketProvider with ChangeNotifier {
     } catch (e) {
       throw Exception("Erreur lors de la mise à jour : $e");
     }
+  }
+
+
+  Future<void> refreshMarkets() async {
+    _isLoading = true;
+    notifyListeners();
+    await fetchMarkets();
+    _isLoading = false;
+    notifyListeners();
   }
 }

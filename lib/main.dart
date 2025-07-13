@@ -19,6 +19,9 @@ import 'screens/edit_product_screen.dart';
 import 'screens/home.dart';
 import 'screens/market_map_screen.dart';
 import 'screens/market_form_screen.dart';
+import 'screens/market_list_screen.dart';
+import 'screens/map_picker_screen.dart';
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -81,6 +84,8 @@ class MyApp extends StatelessWidget {
         '/home': (context) => const HomeScreen(),
         '/market-map': (context) => MarketMapScreen(),
         '/market-form': (context) => const MarketFormScreen(),
+        '/market-list': (context) => const MarketListScreen(),
+        '/map-picker': (context) => const MapPickerScreen(),
       },
     );
   }

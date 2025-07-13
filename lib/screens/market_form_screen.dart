@@ -2,8 +2,8 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
+import 'package:latlong2/latlong.dart';
 
 import '../models/market.dart';
 import '../providers/market_provider.dart';
@@ -23,6 +23,7 @@ class _MarketFormScreenState extends State<MarketFormScreen> {
 
   double? latitude;
   double? longitude;
+  String? cityName; // variable pour stocker le nom de la ville
   File? _imageFile;
 
   Future<void> _pickImage() async {
@@ -34,54 +35,63 @@ class _MarketFormScreenState extends State<MarketFormScreen> {
     }
   }
 
-  Future<void> _getCurrentLocation() async {
-    final position = await Geolocator.getCurrentPosition();
-    setState(() {
-      latitude = position.latitude;
-      longitude = position.longitude;
-    });
+  // Ouvre la page Map Picker et récupère la position et le nom de la ville
+  Future<void> _openMapPicker() async {
+    final result = await Navigator.pushNamed(context, '/map-picker') as Map<String, dynamic>?;
+
+    if (result != null && result['latlng'] != null) {
+      final LatLng latlng = result['latlng'];
+      setState(() {
+        latitude = latlng.latitude;
+        longitude = latlng.longitude;
+        cityName = (result['city'] as String?) ?? "Ville inconnue";
+      });
+      print("MarketFormScreen: cityName récupérée = $cityName");
+    }
+  }
+void _submitForm() {
+  final marketProvider = Provider.of<MarketProvider>(context, listen: false);
+
+  final name = nameController.text.trim();
+  final description = descriptionController.text.trim();
+  final hours = hoursController.text.trim();
+
+  if (name.isEmpty || description.isEmpty || latitude == null || longitude == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("❌ Remplissez tous les champs obligatoires")),
+    );
+    return;
   }
 
-  void _submitForm() {
-    final marketProvider = Provider.of<MarketProvider>(context, listen: false);
+  if (_imageFile == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("❌ Veuillez sélectionner une image")),
+    );
+    return;
+  }
 
-    final name = nameController.text.trim();
-    final description = descriptionController.text.trim();
-    final hours = hoursController.text.trim();
+  final newMarket = Market(
+    name: name,
+    description: description,
+    hours: hours,
+    latitude: latitude!,
+    longitude: longitude!,
+    cityName: cityName,
+  );
 
-    if (name.isEmpty || description.isEmpty || latitude == null || longitude == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("❌ Remplissez tous les champs obligatoires")),
-      );
-      return;
-    }
-
-    if (_imageFile == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("❌ Veuillez sélectionner une image")),
-      );
-      return;
-    }
-
-    final newMarket = Market(
-      name: name,
-      description: description,
-      hours: hours,
-      latitude: latitude!,
-      longitude: longitude!,
+  marketProvider.addMarket(newMarket, _imageFile!).then((_) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("✅ Marché ajouté avec succès")),
     );
 
-    marketProvider.addMarket(newMarket, _imageFile!).then((_) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("✅ Marché ajouté avec succès")),
-      );
-      Navigator.pop(context); // <-- Retour à l'écran précédent
-    }).catchError((error) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("❌ Erreur : $error")),
-      );
-    });
-  }
+    Navigator.pushReplacementNamed(context, '/market-list'); // ✅ Redirection
+  }).catchError((error) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("❌ Erreur : $error")),
+    );
+  });
+}
+
 
   @override
   void dispose() {
@@ -106,7 +116,6 @@ class _MarketFormScreenState extends State<MarketFormScreen> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            // Nom
             TextField(
               controller: nameController,
               decoration: InputDecoration(
@@ -116,8 +125,6 @@ class _MarketFormScreenState extends State<MarketFormScreen> {
               ),
             ),
             const SizedBox(height: 16),
-
-            // Description
             TextField(
               controller: descriptionController,
               maxLines: 3,
@@ -128,8 +135,6 @@ class _MarketFormScreenState extends State<MarketFormScreen> {
               ),
             ),
             const SizedBox(height: 16),
-
-            // Horaires
             TextField(
               controller: hoursController,
               decoration: InputDecoration(
@@ -139,24 +144,24 @@ class _MarketFormScreenState extends State<MarketFormScreen> {
               ),
             ),
             const SizedBox(height: 16),
-
-            // Localisation (coordonnées)
+            // Affichage ville + coordonnées
             Row(
               children: [
                 Expanded(
-                  child: Text(latitude != null && longitude != null
-                      ? '📍 Position : $latitude, $longitude'
-                      : '📍 Position non définie'),
+                  child: Text(
+                    latitude != null && longitude != null
+                        ? '📍 ${cityName ?? "Ville inconnue"}\nLat: $latitude, Lng: $longitude'
+                        : '📍 Position non définie',
+                    style: const TextStyle(fontSize: 16),
+                  ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.location_on),
-                  onPressed: _getCurrentLocation,
+                  icon: const Icon(Icons.map),
+                  onPressed: _openMapPicker,
                 ),
               ],
             ),
             const SizedBox(height: 16),
-
-            // Image Picker
             GestureDetector(
               onTap: _pickImage,
               child: _imageFile == null
@@ -181,14 +186,12 @@ class _MarketFormScreenState extends State<MarketFormScreen> {
                     ),
             ),
             const SizedBox(height: 24),
-
-            // Bouton Ajouter
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: isLoading ? null : _submitForm,
                 icon: isLoading
-                    ? SizedBox(
+                    ? const SizedBox(
                         width: 24,
                         height: 24,
                         child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
