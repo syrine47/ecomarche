@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "854414601009",
-    "project_id": "ecomarche-8e322",
-    "storage_bucket": "ecomarche-8e322.firebasestorage.app"
+    "project_number": "790998300018",
+    "project_id": "ecomarche-d04fb",
+    "storage_bucket": "ecomarche-d04fb.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:854414601009:android:244d11ed0709b00f8cde10",
+        "mobilesdk_app_id": "1:790998300018:android:2664df0efff2a0c12259eb",
         "android_client_info": {
           "package_name": "com.example.ecomarche"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyDbinmPMLxh4Vr9wmiXymrTCbPjly6qBYg"
+          "current_key": "AIzaSyCxJN5dQaM3U_wg_ESbVk-JLxVXHSG9EEk"
         }
       ],
       "services": {

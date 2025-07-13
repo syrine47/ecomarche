@@ -28,7 +28,7 @@ class MarketProvider with ChangeNotifier {
     } catch (e) {
       throw Exception("Erreur lors du chargement des marchés : $e");
     }
-  }
+  } 
 
   /// ➕ Ajouter un nouveau marché avec image
   Future<void> addMarket(Market market, File imageFile) async {

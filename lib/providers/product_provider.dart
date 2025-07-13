@@ -47,7 +47,6 @@ class ProductProvider with ChangeNotifier {
 
       // 4. Recharger la liste des produits
       await fetchProducts();
-
     } catch (e) {
       print("❌ Erreur lors de l'ajout : $e");
       rethrow;
@@ -61,24 +60,35 @@ class ProductProvider with ChangeNotifier {
     try {
       final snapshot = await _firestore.collection('products').get();
       _products = snapshot.docs
-          .map((doc) =>
-              Product.fromMap(doc.data() as Map<String, dynamic>, id: doc.id))
+          .map(
+            (doc) =>
+                Product.fromMap(doc.data() as Map<String, dynamic>, doc.id),
+          )
           .toList();
-      print("✅ Produits chargés avec succès : ${_products.length} produits trouvés");
+      print(
+        "✅ Produits chargés avec succès : ${_products.length} produits trouvés",
+      );
       notifyListeners();
     } catch (e) {
       print("❌ Erreur lors du chargement des produits : $e");
     }
   }
 
-  Future<void> updateProduct(String productId, Product updatedProduct, File? newImageFile) async {
+  Future<void> updateProduct(
+    String productId,
+    Product updatedProduct,
+    File? newImageFile,
+  ) async {
     try {
       print("🔄 Début mise à jour du produit...");
       String? imageUrl = updatedProduct.image;
 
       // Si une nouvelle image a été sélectionnée, on la remplace
       if (newImageFile != null) {
-        final ref = _storage.ref().child('product_images').child('${DateTime.now().millisecondsSinceEpoch}.jpg');
+        final ref = _storage
+            .ref()
+            .child('product_images')
+            .child('${DateTime.now().millisecondsSinceEpoch}.jpg');
         await ref.putFile(newImageFile);
         imageUrl = await ref.getDownloadURL();
         print("✅ Nouvelle image uploadée : $imageUrl");
@@ -87,7 +97,10 @@ class ProductProvider with ChangeNotifier {
       final productData = updatedProduct.copyWith(image: imageUrl).toMap();
       print("📝 Nouvelles données produit : $productData");
 
-      await _firestore.collection('products').doc(productId).update(productData);
+      await _firestore
+          .collection('products')
+          .doc(productId)
+          .update(productData);
       print("✅ Produit mis à jour dans Firestore !");
 
       await fetchProducts(); // 🔄 Rafraîchir la liste locale

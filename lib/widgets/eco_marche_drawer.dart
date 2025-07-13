@@ -1,4 +1,6 @@
+import 'package:ecomarche/providers/auth_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class EcoMarcheDrawer extends StatelessWidget {
   const EcoMarcheDrawer({super.key});
@@ -41,7 +43,7 @@ class EcoMarcheDrawer extends StatelessWidget {
             leading: const Icon(Icons.favorite),
             title: const Text('Favoris'),
             onTap: () {
-              // Navigator.pushNamed(context, '/favorites');
+              Navigator.pushNamed(context, '/fav');
             },
           ),
           ListTile(
@@ -59,11 +61,28 @@ class EcoMarcheDrawer extends StatelessWidget {
               // Navigator.pushNamed(context, '/settings');
             },
           ),
+
+          ListTile(
+            leading: const Icon(Icons.settings),
+            title: const Text('Profil'),
+            onTap: () {
+              Navigator.pushNamed(context, '/profile');
+            },
+          ),
           ListTile(
             leading: const Icon(Icons.logout),
             title: const Text('Déconnexion'),
-            onTap: () {
-              // Déconnexion Firebase ici
+            onTap: () async {
+              final authProvider = Provider.of<AuthProvider>(
+                context,
+                listen: false,
+              );
+
+              // ❌ Evite de rediriger avant de déconnecter
+              await authProvider.logout();
+
+              // ✅ Redirige seulement après avoir vidé l’état utilisateur
+              Navigator.pushReplacementNamed(context, '/');
             },
           ),
         ],

@@ -1,3 +1,5 @@
+import 'package:ecomarche/models/product.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'edit_product_screen.dart';
@@ -60,6 +62,48 @@ class ProductListScreen extends StatelessWidget {
       },
     );
   }
+
+
+  //fonction pour mettre favoris
+  Future<void> addToFavorites(Product product, String userId, BuildContext context) async {
+  try {
+    final favoritesRef = FirebaseFirestore.instance.collection('favorites');
+
+    // Check if already favorited to avoid duplicates
+    final existing = await favoritesRef
+        .where('userId', isEqualTo: userId)
+        .where('productId', isEqualTo: product.id)
+        .get();
+
+    if (existing.docs.isNotEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${product.name} est déjà dans vos favoris.')),
+      );
+      return;
+    }
+
+    await favoritesRef.add({
+      'userId': userId,
+      'productId': product.id,
+      'productName': product.name,
+      'productPrice': product.price,
+      'productImageUrl': product.image,
+      'timestamp': FieldValue.serverTimestamp(),
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('${product.name} a été ajouté aux favoris.')),
+    );
+  } catch (e) {
+    print('❌ Erreur ajout aux favoris: $e');
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Erreur lors de l\'ajout aux favoris.')),
+    );
+  }
+}
+
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -252,6 +296,38 @@ class ProductListScreen extends StatelessWidget {
                             color: Colors.red.shade600,
                             tooltip: 'Supprimer',
                           ),
+
+                         // Bouton favoris
+// Bouton favoris
+IconButton(
+  onPressed: () async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      await addToFavorites(
+        Product(
+          id: productId,
+          name: product['name'],
+          description: product['description'],
+          price: product['price'],
+          category: product['category'],
+          origin: product['origin'],
+          image: product['image'],
+        ),
+        user.uid,
+        context,
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Veuillez vous connecter pour ajouter aux favoris.")),
+      );
+    }
+  },
+  icon: const Icon(Icons.favorite_border),
+  color: Colors.red.shade600,
+  tooltip: 'Ajouter aux favoris',
+),
+
+
                         ],
                       ),
                     ),

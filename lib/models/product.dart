@@ -51,7 +51,7 @@ class Product {
   }
 
   // Construire un Product à partir d'une Map
-  factory Product.fromMap(Map<String, dynamic> map, {String? id}) {
+  factory Product.fromMap(Map<String, dynamic> map, String id) {
     return Product(
       id: id,
       name: map['name'] ?? '',
