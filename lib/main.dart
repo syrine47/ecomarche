@@ -21,13 +21,14 @@ import 'screens/market_map_screen.dart';
 import 'screens/market_form_screen.dart';
 import 'screens/market_list_screen.dart';
 import 'screens/map_picker_screen.dart';
-
+import 'services/notification_service.dart';  
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // ✅ Firebase
   await Firebase.initializeApp();
+  await NotificationService.initialize(); // ⛔ ne plus passer de `context`
 
   // ✅ Supabase
   await Supabase.initialize(
@@ -66,14 +67,10 @@ class MyApp extends StatelessWidget {
 
         // Products
         '/product-list': (context) => const ProductListScreen(),
-                '/fav': (context) => FavoritesScreen(),
-
-
+        '/fav': (context) => FavoritesScreen(),
         '/product-form': (context) => const ProductFormScreen(),
         '/edit-product': (context) {
-          final args =
-              ModalRoute.of(context)!.settings.arguments
-                  as Map<String, dynamic>;
+          final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
           return EditProductScreen(
             productId: args['productId'],
             productData: args['productData'],

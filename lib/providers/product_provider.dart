@@ -5,6 +5,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 
 import '../models/product.dart';
 import '../services/supabase_service.dart';
+import '../services/notification_service.dart';
 
 class ProductProvider with ChangeNotifier {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -16,46 +17,66 @@ class ProductProvider with ChangeNotifier {
   List<Product> _products = [];
   List<Product> get products => _products;
 
-  Future<void> addProduct(Product product, File? imageFile) async {
-    try {
-      _isLoading = true;
-      notifyListeners();
+Future<void> addProduct(Product product, File? imageFile) async {
+  try {
+    _isLoading = true;
+    notifyListeners();
 
-      print("🔄 Début ajout produit...");
+    print("🔄 Début ajout produit...");
 
-      String? imageUrl;
+    String? imageUrl;
 
-      // 1. Upload de l'image avec SupabaseService si elle existe
-      if (imageFile != null) {
-        print("📷 Image détectée, en cours d'upload vers Supabase...");
-        imageUrl = await SupabaseService.uploadImage(imageFile);
+    // 1. Upload de l'image avec SupabaseService si elle existe
+    if (imageFile != null) {
+      print("📷 Image détectée, en cours d'upload vers Supabase...");
+      imageUrl = await SupabaseService.uploadImage(imageFile);
 
-        if (imageUrl != null) {
-          print("✅ Image uploadée avec succès : $imageUrl");
-        } else {
-          print("❌ Échec de l'upload de l'image");
-        }
+      if (imageUrl != null) {
+        print("✅ Image uploadée avec succès : $imageUrl");
+      } else {
+        print("❌ Échec de l'upload de l'image");
       }
-
-      // 2. Créer le produit avec l'URL de l'image
-      final productWithImage = product.copyWith(image: imageUrl);
-
-      // 3. Sauvegarder dans Firestore
-      await _firestore.collection('products').add(productWithImage.toMap());
-
-      print("✅ Produit ajouté avec succès !");
-
-      // 4. Recharger la liste des produits
-      await fetchProducts();
-    } catch (e) {
-      print("❌ Erreur lors de l'ajout : $e");
-      rethrow;
-    } finally {
-      _isLoading = false;
-      notifyListeners();
     }
-  }
 
+    // 2. Créer le produit avec l'URL de l'image
+    final productWithImage = product.copyWith(image: imageUrl);
+
+    // 3. Sauvegarder dans Firestore
+    DocumentReference productRef = await _firestore.collection('products').add(productWithImage.toMap());
+
+    print("✅ Produit ajouté avec succès !");
+
+    // 4. NOTIFICATION: Notification locale pour l'utilisateur qui a ajouté
+    await NotificationService.showLocalNotification(
+      id: 1,
+      title: 'Produit ajouté',
+      body: 'Votre produit "${product.name}" a été ajouté avec succès',
+      payload: 'product_added_${productRef.id}', // ✅ Payload personnalisé avec l'ID du produit
+    );
+
+    // 5. Cloud Function (déclenchée automatiquement)
+    print("🔔 Cloud Function déclenchée pour notifier les autres utilisateurs");
+
+    // 6. Recharger la liste des produits
+    await fetchProducts();
+
+  } catch (e) {
+    print("❌ Erreur lors de l'ajout : $e");
+
+    // Notification d'erreur
+    await NotificationService.showLocalNotification(
+      id: 2,
+      title: 'Erreur',
+      body: 'Impossible d\'ajouter le produit "${product.name}". Veuillez réessayer.',
+      payload: 'error_add_product', // ✅ Payload pour identifier les erreurs
+    );
+
+    rethrow;
+  } finally {
+    _isLoading = false;
+    notifyListeners();
+  }
+}
   Future<void> fetchProducts() async {
     try {
       final snapshot = await _firestore.collection('products').get();

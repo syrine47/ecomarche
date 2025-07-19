@@ -27,85 +27,120 @@ class FavoritesScreen extends StatelessWidget {
         stream: FirebaseFirestore.instance
             .collection('favorites')
             .where('userId', isEqualTo: user.uid)
-            .orderBy('timestamp', descending: true)
             .snapshots(),
         builder: (context, favSnapshot) {
+          // Debug logging
+          print('🔍 Connection state: ${favSnapshot.connectionState}');
+          print('🔍 Has data: ${favSnapshot.hasData}');
+          print('🔍 User ID: ${user.uid}');
+          
           if (favSnapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
-          if (!favSnapshot.hasData || favSnapshot.data!.docs.isEmpty) {
-            return const Center(
-              child: Text("Vous n'avez aucun produit en favori."),
+          
+          if (favSnapshot.hasError) {
+            print('❌ Error: ${favSnapshot.error}');
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error, color: Colors.red, size: 64),
+                  const SizedBox(height: 16),
+                  Text('Erreur: ${favSnapshot.error}'),
+                ],
+              ),
             );
           }
-
+          
+          if (!favSnapshot.hasData) {
+            print('❌ No data received');
+            return const Center(child: Text("Aucune donnée reçue"));
+          }
+          
           final favDocs = favSnapshot.data!.docs;
+          print('🔍 Documents count: ${favDocs.length}');
+          
+          // Log each document for debugging
+          for (var doc in favDocs) {
+            print('🔍 Doc ID: ${doc.id}');
+            print('🔍 Doc data: ${doc.data()}');
+          }
+          
+          if (favDocs.isEmpty) {
+            return const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.favorite_border, size: 64, color: Colors.grey),
+                  SizedBox(height: 16),
+                  Text("Vous n'avez aucun produit en favori."),
+                ],
+              ),
+            );
+          }
 
           return ListView.builder(
             itemCount: favDocs.length,
             itemBuilder: (context, index) {
               final favData = favDocs[index].data() as Map<String, dynamic>;
-              final productId = favData['productId'] as String;
+              print('🔍 Building item $index with data: $favData');
 
-              return FutureBuilder<DocumentSnapshot>(
-                future: FirebaseFirestore.instance
-                    .collection('products')
-                    .doc(productId)
-                    .get(),
-                builder: (context, productSnapshot) {
-                  if (productSnapshot.connectionState == ConnectionState.waiting) {
-                    return const ListTile(title: Text('Chargement...'));
-                  }
-                  if (!productSnapshot.hasData || !productSnapshot.data!.exists) {
-                    return const ListTile(title: Text('Produit non trouvé'));
-                  }
+              final product = Product(
+                id: favData['productId'] ?? '',
+                name: favData['productName'] ?? 'Sans nom',
+                description: '', // Non disponible ici
+                price: (favData['productPrice'] ?? 0).toDouble(),
+                category: '', // Pas stocké dans Firestore
+                origin: '',
+                image: favData['productImageUrl'],
+              );
 
-                  final productData =
-                      productSnapshot.data!.data() as Map<String, dynamic>;
+              return Card(
+                margin: const EdgeInsets.all(8),
+                child: ListTile(
+                  leading: product.image != null && product.image!.isNotEmpty
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.network(
+                            product.image!,
+                            width: 50,
+                            height: 50,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return const Icon(Icons.image_not_supported);
+                            },
+                          ),
+                        )
+                      : const Icon(Icons.image_not_supported),
+                  title: Text(product.name),
+                  subtitle: Text('${product.price} TND'),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.delete, color: Colors.red),
+                    tooltip: 'Retirer des favoris',
+                    onPressed: () async {
+                      try {
+                        await FirebaseFirestore.instance
+                            .collection('favorites')
+                            .doc(favDocs[index].id)
+                            .delete();
 
-                  final product = Product(
-                    id: productId,
-                    name: productData['name'] ?? 'Sans nom',
-                    description: productData['description'] ?? '',
-                    price: productData['price'] ?? 0,
-                    category: productData['category'] ?? '',
-                    origin: productData['origin'] ?? '',
-                    image: productData['image'],
-                  );
-
-                  return Card(
-                    margin: const EdgeInsets.all(8),
-                    child: ListTile(
-                      leading: product.image != null
-                          ? Image.network(
-                              product.image!,
-                              width: 50,
-                              height: 50,
-                              fit: BoxFit.cover,
-                            )
-                          : const Icon(Icons.image_not_supported),
-                      title: Text(product.name),
-                      subtitle: Text('${product.category} - ${product.price} TND'),
-                      trailing: IconButton(
-                        icon: const Icon(Icons.delete, color: Colors.red),
-                        tooltip: 'Retirer des favoris',
-                        onPressed: () async {
-                          // Supprimer le favori dans Firestore
-                          await FirebaseFirestore.instance
-                              .collection('favorites')
-                              .doc(favDocs[index].id)
-                              .delete();
-
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('${product.name} a été retiré des favoris'),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  );
-                },
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('${product.name} a été retiré des favoris'),
+                          ),
+                        );
+                      } catch (e) {
+                        print('❌ Error deleting favorite: $e');
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Erreur lors de la suppression'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                    },
+                  ),
+                ),
               );
             },
           );
