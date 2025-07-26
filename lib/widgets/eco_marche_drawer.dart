@@ -79,22 +79,35 @@ class EcoMarcheDrawer extends StatelessWidget {
               Navigator.pushNamed(context, '/profile');
             },
           ),
+          // ListTile(
+          //   leading: const Icon(Icons.logout),
+          //   title: const Text('Déconnexion'),
+          //   onTap: () async {
+          //     final authProvider = Provider.of<AuthProvider>(
+          //       context,
+          //       listen: false,
+          //     );
+
+          //     // ❌ Evite de rediriger avant de déconnecter
+          //     await authProvider.logout();
+
+          //     // ✅ Redirige seulement après avoir vidé l’état utilisateur
+          //     Navigator.pushReplacementNamed(context, '/');
+          //   },
+          // ),
           ListTile(
-            leading: const Icon(Icons.logout),
-            title: const Text('Déconnexion'),
-            onTap: () async {
-              final authProvider = Provider.of<AuthProvider>(
-                context,
-                listen: false,
-              );
+  leading: const Icon(Icons.logout),
+  title: const Text('Déconnexion'),
+  onTap: () async {
+    final authProvider = Provider.of<AuthProvider>(
+      context,
+      listen: false,
+    );
 
-              // ❌ Evite de rediriger avant de déconnecter
-              await authProvider.logout();
+    await authProvider.logout(context); // ✅ ici on passe le contexte
+  },
+),
 
-              // ✅ Redirige seulement après avoir vidé l’état utilisateur
-              Navigator.pushReplacementNamed(context, '/');
-            },
-          ),
         ],
       ),
     );

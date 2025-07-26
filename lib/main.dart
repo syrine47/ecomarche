@@ -21,15 +21,15 @@ import 'screens/market_map_screen.dart';
 import 'screens/market_form_screen.dart';
 import 'screens/market_list_screen.dart';
 import 'screens/map_picker_screen.dart';
-import 'services/notification_service.dart';  
+import 'screens/landing_page.dart';
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // ✅ Firebase
   await Firebase.initializeApp();
-  await NotificationService.initialize(); // ⛔ ne plus passer de `context`
-
+ 
   // ✅ Supabase
   await Supabase.initialize(
     url: 'https://xyzpsegsttcxpxgxbduk.supabase.co',
@@ -55,35 +55,37 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'EcoMarché',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(primarySwatch: Colors.green),
-      initialRoute: '/',
-      routes: {
-        // Auth
-        '/': (context) => const LoginScreen(),
-        '/signup': (context) => SignUpPage(),
-        '/profile': (context) => const ProfileScreen(),
+  title: 'EcoMarché',
+  debugShowCheckedModeBanner: false,
+  theme: ThemeData(primarySwatch: Colors.green),
+  initialRoute: '/landing', // 👈 c’est ici qu’on démarre maintenant
+  routes: {
+    
+    '/landing': (context) => LandingPage(), // 👈 enlève "const"
+    '/login': (context) => const LoginScreen(),
+    '/signup': (context) => SignUpPage(),
+    '/profile': (context) => const ProfileScreen(),
 
-        // Products
-        '/product-list': (context) => const ProductListScreen(),
-        '/fav': (context) => FavoritesScreen(),
-        '/product-form': (context) => const ProductFormScreen(),
-        '/edit-product': (context) {
-          final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
-          return EditProductScreen(
-            productId: args['productId'],
-            productData: args['productData'],
-          );
-        },
+    // Products
+    '/product-list': (context) => const ProductListScreen(),
+    '/fav': (context) => FavoritesScreen(),
+    '/product-form': (context) => const ProductFormScreen(),
+    '/edit-product': (context) {
+      final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+      return EditProductScreen(
+        productId: args['productId'],
+        productData: args['productData'],
+      );
+    },
 
-        // Markets
-        '/home': (context) => const HomeScreen(),
-        '/market-map': (context) => MarketMapScreen(),
-        '/market-form': (context) => const MarketFormScreen(),
-        '/market-list': (context) => const MarketListScreen(),
-        '/map-picker': (context) => const MapPickerScreen(),
-      },
-    );
+    // Markets
+    '/home': (context) => const HomeScreen(),
+    '/market-map': (context) => MarketMapScreen(),
+    '/market-form': (context) => const MarketFormScreen(),
+    '/market-list': (context) => const MarketListScreen(),
+    '/map-picker': (context) => const MapPickerScreen(),
+  },
+);
+
   }
 }

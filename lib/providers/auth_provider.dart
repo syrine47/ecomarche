@@ -41,9 +41,19 @@ class AuthProvider with ChangeNotifier {
   }
 
   /// Déconnexion
-  Future<void> logout() async {
-    await _authService.signOut(); // déconnexion Firebase
-    _user = null; // vider les données locales
-    notifyListeners(); // notifier les listeners
-  }
+  // Future<void> logout() async {
+  //   await _authService.signOut(); // déconnexion Firebase
+  //   _user = null; // vider les données locales
+  //   notifyListeners(); // notifier les listeners
+  // }
+
+  Future<void> logout(BuildContext context) async {
+  await _authService.signOut(); // déconnexion Firebase
+  _user = null;
+  notifyListeners();
+
+  // Redirection vers la LandingPage
+  Navigator.pushReplacementNamed(context, '/landing');
+}
+
 }

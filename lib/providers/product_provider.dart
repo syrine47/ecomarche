@@ -20,7 +20,7 @@ class ProductProvider with ChangeNotifier {
 Future<void> addProduct(Product product, File? imageFile) async {
   try {
     _isLoading = true;
-    notifyListeners();
+
 
     print("🔄 Début ajout produit...");
 
@@ -46,16 +46,8 @@ Future<void> addProduct(Product product, File? imageFile) async {
 
     print("✅ Produit ajouté avec succès !");
 
-    // 4. NOTIFICATION: Notification locale pour l'utilisateur qui a ajouté
-    await NotificationService.showLocalNotification(
-      id: 1,
-      title: 'Produit ajouté',
-      body: 'Votre produit "${product.name}" a été ajouté avec succès',
-      payload: 'product_added_${productRef.id}', // ✅ Payload personnalisé avec l'ID du produit
-    );
+ 
 
-    // 5. Cloud Function (déclenchée automatiquement)
-    print("🔔 Cloud Function déclenchée pour notifier les autres utilisateurs");
 
     // 6. Recharger la liste des produits
     await fetchProducts();
@@ -63,13 +55,7 @@ Future<void> addProduct(Product product, File? imageFile) async {
   } catch (e) {
     print("❌ Erreur lors de l'ajout : $e");
 
-    // Notification d'erreur
-    await NotificationService.showLocalNotification(
-      id: 2,
-      title: 'Erreur',
-      body: 'Impossible d\'ajouter le produit "${product.name}". Veuillez réessayer.',
-      payload: 'error_add_product', // ✅ Payload pour identifier les erreurs
-    );
+    
 
     rethrow;
   } finally {
@@ -77,6 +63,8 @@ Future<void> addProduct(Product product, File? imageFile) async {
     notifyListeners();
   }
 }
+
+
   Future<void> fetchProducts() async {
     try {
       final snapshot = await _firestore.collection('products').get();
