@@ -8,7 +8,12 @@ class AuthProvider with ChangeNotifier {
 
   UserModel? get user => _user;
 
-  /// Inscription d’un utilisateur
+  // 👈 NOUVEAU : Getters pour vérifier le rôle facilement
+  bool get isAdmin => _user?.isAdmin ?? false;
+  bool get isUser => _user?.isUser ?? true;
+  String get userRole => _user?.role ?? 'user';
+
+  /// Inscription d'un utilisateur
   Future<void> registerUser({
     required String nom,
     required String prenom,
@@ -17,43 +22,46 @@ class AuthProvider with ChangeNotifier {
     required String dateNaissance,
   }) async {
     final userModel = UserModel(
-      uid:
-          '', // UID sera défini dans Firestore automatiquement par l’ID du document
+      uid: '', // UID sera défini dans Firestore automatiquement par l'ID du document
       nom: nom,
       prenom: prenom,
       email: email,
       dateNaissance: dateNaissance,
+      role: 'user', // 👈 Rôle par défaut lors de l'inscription
     );
 
     await _authService.registerUser(userModel, password);
     notifyListeners();
   }
 
-  /// Connexion
-  Future<void> login(String email, String password) async {
+  /// Connexion avec redirection selon le rôle
+  Future<void> login(String email, String password, BuildContext context) async {
     final user = await _authService.signIn(email, password);
 
     if (user != null) {
       final userData = await _authService.getUserData(user.uid);
       _user = userData;
       notifyListeners();
+
+      // 👈 NOUVEAU : Redirection selon le rôle
+      if (_user != null) {
+        if (_user!.isAdmin) {
+          // Redirection vers interface admin
+          Navigator.pushReplacementNamed(context, '/product-form');
+        } else {
+          // Redirection vers interface utilisateur normal
+          Navigator.pushReplacementNamed(context, '/product-list');
+        }
+      }
     }
   }
 
-  /// Déconnexion
-  // Future<void> logout() async {
-  //   await _authService.signOut(); // déconnexion Firebase
-  //   _user = null; // vider les données locales
-  //   notifyListeners(); // notifier les listeners
-  // }
-
   Future<void> logout(BuildContext context) async {
-  await _authService.signOut(); // déconnexion Firebase
-  _user = null;
-  notifyListeners();
+    await _authService.signOut(); // déconnexion Firebase
+    _user = null;
+    notifyListeners();
 
-  // Redirection vers la LandingPage
-  Navigator.pushReplacementNamed(context, '/landing');
-}
-
+    // Redirection vers la LandingPage
+    Navigator.pushReplacementNamed(context, '/landing');
+  }
 }

@@ -7,7 +7,7 @@ class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  /// Inscription
+  /// Inscription (avec rôle par défaut 'user')
   Future<void> registerUser(UserModel userModel, String password) async {
     try {
       // 🔐 Créer l'utilisateur dans Firebase Auth
@@ -26,6 +26,7 @@ class AuthService {
         'prenom': userModel.prenom,
         'email': userModel.email,
         'dateNaissance': userModel.dateNaissance,
+        'role': 'user', // 👈 NOUVEAU : rôle par défaut
       });
     } catch (e) {
       print("❌ Erreur d'inscription: $e");
@@ -47,7 +48,7 @@ class AuthService {
     }
   }
 
-  /// Récupérer les données utilisateur
+  /// Récupérer les données utilisateur avec le rôle
   Future<UserModel?> getUserData(String uid) async {
     try {
       final snapshot = await _firestore.collection('users').doc(uid).get();
@@ -63,5 +64,16 @@ class AuthService {
   /// Déconnexion
   Future<void> signOut() async {
     await _auth.signOut();
+  }
+
+  // 👈 NOUVEAU : Méthode pour mettre à jour le rôle (optionnel, pour debug)
+  Future<void> updateUserRole(String uid, String newRole) async {
+    try {
+      await _firestore.collection('users').doc(uid).update({'role': newRole});
+      print("✅ Rôle mis à jour : $newRole");
+    } catch (e) {
+      print("❌ Erreur mise à jour rôle: $e");
+      rethrow;
+    }
   }
 }

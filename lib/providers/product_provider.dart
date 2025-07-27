@@ -6,6 +6,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import '../models/product.dart';
 import '../services/supabase_service.dart';
 import '../services/notification_service.dart';
+import '../services/supabase_service.dart';
 
 class ProductProvider with ChangeNotifier {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -83,42 +84,100 @@ Future<void> addProduct(Product product, File? imageFile) async {
     }
   }
 
-  Future<void> updateProduct(
-    String productId,
-    Product updatedProduct,
-    File? newImageFile,
-  ) async {
-    try {
-      print("🔄 Début mise à jour du produit...");
-      String? imageUrl = updatedProduct.image;
+  // Future<void> updateProduct(
+  //   String productId,
+  //   Product updatedProduct,
+  //   File? newImageFile,
+  // ) async {
+  //   try {
+  //     print("🔄 Début mise à jour du produit...");
+  //     String? imageUrl = updatedProduct.image;
 
-      // Si une nouvelle image a été sélectionnée, on la remplace
-      if (newImageFile != null) {
-        final ref = _storage
-            .ref()
-            .child('product_images')
-            .child('${DateTime.now().millisecondsSinceEpoch}.jpg');
-        await ref.putFile(newImageFile);
-        imageUrl = await ref.getDownloadURL();
-        print("✅ Nouvelle image uploadée : $imageUrl");
+  //     // Si une nouvelle image a été sélectionnée, on la remplace
+  //     if (newImageFile != null) {
+  //       final ref = _storage
+  //           .ref()
+  //           .child('product_images')
+  //           .child('${DateTime.now().millisecondsSinceEpoch}.jpg');
+  //       await ref.putFile(newImageFile);
+  //       imageUrl = await ref.getDownloadURL();
+  //       print("✅ Nouvelle image uploadée : $imageUrl");
+  //     }
+
+  //     final productData = updatedProduct.copyWith(image: imageUrl).toMap();
+  //     print("📝 Nouvelles données produit : $productData");
+
+  //     await _firestore
+  //         .collection('products')
+  //         .doc(productId)
+  //         .update(productData);
+  //     print("✅ Produit mis à jour dans Firestore !");
+
+  //     await fetchProducts(); // 🔄 Rafraîchir la liste locale
+  //     notifyListeners();
+  //   } catch (e) {
+  //     print("❌ Erreur lors de la mise à jour : $e");
+  //     rethrow;
+  //   }
+  // }
+Future<void> updateProduct(
+  String productId,
+  Product updatedProduct,
+  File? newImageFile,
+) async {
+  try {
+    print("🔄 Début mise à jour du produit...");
+    String? imageUrl = updatedProduct.image; // URL actuelle par défaut
+
+    // Si une nouvelle image a été sélectionnée, on la remplace
+    if (newImageFile != null) {
+      print("📸 Upload de la nouvelle image vers Supabase...");
+      
+      // Supprimer l'ancienne image si elle existe
+      if (updatedProduct.image != null && updatedProduct.image!.isNotEmpty) {
+        try {
+          // Extraire le nom du fichier depuis l'URL Supabase
+          final oldFileName = updatedProduct.image!.split('/').last.split('?').first;
+          await SupabaseService.deleteImage(oldFileName);
+          print("🗑️ Ancienne image supprimée : $oldFileName");
+        } catch (e) {
+          print("⚠️ Impossible de supprimer l'ancienne image : $e");
+          // On continue même si la suppression échoue
+        }
       }
-
-      final productData = updatedProduct.copyWith(image: imageUrl).toMap();
-      print("📝 Nouvelles données produit : $productData");
-
-      await _firestore
-          .collection('products')
-          .doc(productId)
-          .update(productData);
-      print("✅ Produit mis à jour dans Firestore !");
-
-      await fetchProducts(); // 🔄 Rafraîchir la liste locale
-      notifyListeners();
-    } catch (e) {
-      print("❌ Erreur lors de la mise à jour : $e");
-      rethrow;
+      
+      // Upload de la nouvelle image vers Supabase
+      imageUrl = await SupabaseService.uploadImage(newImageFile);
+      
+      if (imageUrl == null) {
+        throw Exception("Échec de l'upload de l'image vers Supabase");
+      }
+      
+      print("✅ Nouvelle image uploadée vers Supabase : $imageUrl");
     }
+
+    // Préparer les données du produit avec la nouvelle URL d'image
+    final productData = updatedProduct.copyWith(image: imageUrl).toMap();
+    print("📝 Nouvelles données produit : $productData");
+
+    // Mettre à jour dans Firestore
+    await _firestore
+        .collection('products')
+        .doc(productId)
+        .update(productData);
+    print("✅ Produit mis à jour dans Firestore !");
+
+    // Rafraîchir la liste locale
+    await fetchProducts();
+    notifyListeners();
+    
+    print("🎉 Mise à jour du produit terminée avec succès !");
+  } catch (e) {
+    print("❌ Erreur lors de la mise à jour : $e");
+    rethrow;
   }
+}
+
 
   Future<void> deleteProduct(String productId) async {
     try {

@@ -4,6 +4,7 @@ class UserModel {
   final String prenom;
   final String email;
   final String dateNaissance;
+  final String role; // 👈 NOUVEAU : rôle ajouté
 
   UserModel({
     required this.uid,
@@ -11,6 +12,7 @@ class UserModel {
     required this.prenom,
     required this.email,
     required this.dateNaissance,
+    this.role = 'user', // 👈 Par défaut : 'user'
   });
 
   Map<String, dynamic> toMap() {
@@ -20,6 +22,7 @@ class UserModel {
       'prenom': prenom,
       'email': email,
       'dateNaissance': dateNaissance,
+      'role': role, // 👈 Inclure le rôle dans la map
     };
   }
 
@@ -30,6 +33,11 @@ class UserModel {
       prenom: map['prenom'] ?? '',
       email: map['email'] ?? '',
       dateNaissance: map['dateNaissance'] ?? '',
+      role: map['role'] ?? 'user', // 👈 Par défaut 'user' si pas trouvé
     );
   }
+
+  // 👈 NOUVEAU : Méthodes utiles pour vérifier le rôle
+  bool get isAdmin => role == 'admin';
+  bool get isUser => role == 'user';
 }
