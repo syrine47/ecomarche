@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/product_provider.dart';
 import 'providers/market_provider.dart';
+import 'providers/event_provider.dart';
 
 // 🟢 Screens
 import 'screens/login_screen.dart';
@@ -22,6 +23,8 @@ import 'screens/market_form_screen.dart';
 import 'screens/market_list_screen.dart';
 import 'screens/map_picker_screen.dart';
 import 'screens/landing_page.dart';
+import 'screens/add_event_screen.dart';
+import 'screens/events_screen.dart';
 
 
 void main() async {
@@ -43,6 +46,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => ProductProvider()),
         ChangeNotifierProvider(create: (_) => MarketProvider()),
+        ChangeNotifierProvider(create: (_) => EventProvider()), // Ajout du provider pour les événements
       ],
       child: const MyApp(),
     ),
@@ -65,6 +69,8 @@ class MyApp extends StatelessWidget {
     '/login': (context) => const LoginScreen(),
     '/signup': (context) => SignUpPage(),
     '/profile': (context) => const ProfileScreen(),
+    '/events': (context) => const AddEventScreen(),
+    '/eventlist': (context) => const EventsScreen(),
 
     // Products
     '/product-list': (context) => const ProductListScreen(),

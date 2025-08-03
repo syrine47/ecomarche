@@ -57,6 +57,15 @@ class EcoMarcheDrawer extends StatelessWidget {
                   Navigator.pushNamed(context, '/product-list');
                 },
               ),
+
+               //test
+               ListTile(
+                leading: const Icon(Icons.person),
+                title: const Text('events'),
+                onTap: () {
+                  Navigator.pushNamed(context, '/eventlist');
+                },
+              ),
               
               // ❤️ Favoris - VISIBLE POUR TOUS
               ListTile(
@@ -78,17 +87,7 @@ class EcoMarcheDrawer extends StatelessWidget {
 
               const Divider(),
               
-              // ⚙️ Paramètres - ADMIN SEULEMENT
-              if (authProvider.isAdmin)
-                ListTile(
-                  leading: const Icon(Icons.settings),
-                  title: const Text('Paramètres'),
-                  onTap: () {
-                    // Navigator.pushNamed(context, '/settings');
-                  },
-                ),
-
-              // 👤 Profil - VISIBLE POUR TOUS
+             
               ListTile(
                 leading: const Icon(Icons.person),
                 title: const Text('Profil'),
@@ -96,6 +95,8 @@ class EcoMarcheDrawer extends StatelessWidget {
                   Navigator.pushNamed(context, '/profile');
                 },
               ),
+
+             
               
               // 🚪 Déconnexion - VISIBLE POUR TOUS
               ListTile(
